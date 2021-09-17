@@ -1,0 +1,19 @@
+[Salesforce]
+username=
+password=
+security_token=
+consumer_key=
+consumer_secret=
+url=https://login.salesforce.com
+
+[Pardot]
+business_unit_id=
+email_template_id=
+campaign_id=
+legacy_api_version=4
+url=https://pi.pardot.com
+
+[Field Naming]
+listing_count_max=6
+api_format=PD2021_Listing{d}_{field}
+human_format=PD2021 Listing{d} {field}
