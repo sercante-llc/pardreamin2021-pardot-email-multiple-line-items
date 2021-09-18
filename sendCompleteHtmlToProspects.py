@@ -51,3 +51,5 @@ for client in clients:
         print('Could not send email to %s' % client['identifier'])
         print(json)
         sys.exit(5)
+
+print('Script executed successfully')
