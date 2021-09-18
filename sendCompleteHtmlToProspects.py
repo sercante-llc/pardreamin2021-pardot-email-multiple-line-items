@@ -21,9 +21,6 @@ for client in clients:
     listings = listingService.getListingsForEmail(client['identifier'])
     print('for %s %s, we will show them %d listings' % (client['firstName'], client['lastName'], len(listings)))
     emailHtml = mailTemplate.render(listings=listings, client=client)
-    # print('\n\n')
-    # print(emailHtml)
-    # print('\n\n')
 
     # now that we've assembled our own HTML, we can send this directly to Pardot
     oneToOneSendType='prospect_id'
@@ -54,6 +51,3 @@ for client in clients:
         print('Could not send email to %s' % client['identifier'])
         print(json)
         sys.exit(5)
-
-    print('aborting the loop')
-    break
