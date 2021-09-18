@@ -30,9 +30,15 @@ def authenticate(config):
         print('Status:{}, {}: {}'.format(r.status_code, r.json().get('error'), r.json().get('error_description') ))
         sys.exit(1)
 
+def getListingFieldName(config, name, row):
+    return config['Field Naming']['api_format'].replace('{d}', str(row)).replace('{field}', name)
+
+def getFieldName(config, name):
+    return getListingFieldName(config,name,'')
+
 def createCustomField(config, fieldName, rowNum):
-    fieldApiName = config['Field Naming']['api_format'].replace('{d}', rowNum).replace('{field}', fieldName)
-    fieldLabel = config['Field Naming']['human_format'].replace('{d}', rowNum).replace('{field}', fieldName)
+    fieldApiName = getListingFieldName(config,fieldName,rowNum)
+    fieldLabel = config['Field Naming']['human_format'].replace('{d}', str(rowNum)).replace('{field}', fieldName)
 
     apiUrl = '%s/api/customField/version/%d/do/create?format=json' % (config['Pardot']['url'], int(config['Pardot']['legacy_api_version']))
     reqData = {
@@ -57,7 +63,7 @@ def createCustomField(config, fieldName, rowNum):
 
 def createCustomFields(config, fieldNames, rowNum):
     for fieldName in fieldNames:
-        createCustomField(config, fieldName, str(rowNum))
+        createCustomField(config, fieldName, rowNum)
         
 
 def storeCreatedCustomField(fieldApiName, fieldId):
@@ -78,3 +84,56 @@ def deleteCustomField(config, fieldApiName, fieldId):
         print('Could not create custom field')
         print(json)
         sys.exit(2)
+
+def updateProspect(config, prospectIdentifier, prospectFields):
+    # now we can prepare the API request
+    identifierType='id'
+    if '@' in prospectIdentifier: identifierType = 'email'
+
+    apiUrl = '%s/api/prospect/version/%d/do/update/%s/%s?format=json' % (config['Pardot']['url'], int(config['Pardot']['legacy_api_version']), identifierType, prospectIdentifier)
+    reqHeaders = {
+        'Authorization': 'Bearer '+ config['Salesforce']['access_token'],
+        'Pardot-Business-Unit-Id': config['Pardot']['business_unit_id']
+    }
+    r = requests.post(url=apiUrl, data=prospectFields, headers=reqHeaders)
+    json = r.json()
+
+    if r.status_code != 200 or json.get('@attributes').get('stat') != 'ok':
+        print('Could not update prospect %s' % prospectIdentifier)
+        print(json)
+        sys.exit(7)
+
+def updateProspectWithListingInfo(config, prospectIdentifier, listings, agentName):
+    # first we need to build our Prospect Update Request data
+    prospectFields = {
+        getFieldName(config, 'Count'): len(listings),
+        getFieldName(config, 'AgentName'): agentName
+    }
+    listingNumber=1
+    for listing in listings:
+        prospectFields[getListingFieldName(config, 'Price', listingNumber)] = listing['price']
+        prospectFields[getListingFieldName(config, 'Bedrooms', listingNumber)] = listing['bedrooms']
+        prospectFields[getListingFieldName(config, 'Bathrooms', listingNumber)] = listing['bathrooms']
+        prospectFields[getListingFieldName(config, 'Sqft', listingNumber)] = listing['sqft']
+        prospectFields[getListingFieldName(config, 'Address', listingNumber)] = listing['address']
+        prospectFields[getListingFieldName(config, 'ListingUrl', listingNumber)] = listing['listing_url']
+        prospectFields[getListingFieldName(config, 'ImageUrl', listingNumber)] = listing['image_url']
+        listingNumber = listingNumber + 1
+
+    print(prospectFields)
+    updateProspect(config, prospectIdentifier, prospectFields)
+
+def updateProspectCleaningListingFields(config, prospectIdentifier, listingCount):
+    prospectFields = {
+        getFieldName(config, 'Count'): ''
+        getFieldName(config, 'AgentName'): ''
+    }
+    for i in range(1,listingCount+1):
+        prospectFields[getListingFieldName(config, 'Price', i)] = ''
+        prospectFields[getListingFieldName(config, 'Bedrooms', i)] = ''
+        prospectFields[getListingFieldName(config, 'Bathrooms', i)] = ''
+        prospectFields[getListingFieldName(config, 'Sqft', i)] = ''
+        prospectFields[getListingFieldName(config, 'Address', i)] = ''
+        prospectFields[getListingFieldName(config, 'ListingUrl', i)] = ''
+        prospectFields[getListingFieldName(config, 'ImageUrl', i)] = ''
+    updateProspect(config, prospectIdentifier, prospectFields)
