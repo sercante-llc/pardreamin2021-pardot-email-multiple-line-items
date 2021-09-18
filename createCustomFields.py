@@ -14,6 +14,7 @@ if os.path.isfile('config/fields.csv'):
 
 # fields to support the Template, which aren't specific to the number of listings we want to display
 functions.createCustomField(config,'Count','')
+functions.createCustomField(config,'AgentName','')
 
 
 # loop through number of listings we can have at most in an email
