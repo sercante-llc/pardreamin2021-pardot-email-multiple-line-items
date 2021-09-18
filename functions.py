@@ -30,31 +30,35 @@ def authenticate(config):
         print('Status:{}, {}: {}'.format(r.status_code, r.json().get('error'), r.json().get('error_description') ))
         sys.exit(1)
 
+def createCustomField(config, fieldName, rowNum):
+    fieldApiName = config['Field Naming']['api_format'].replace('{d}', rowNum).replace('{field}', fieldName)
+    fieldLabel = config['Field Naming']['human_format'].replace('{d}', rowNum).replace('{field}', fieldName)
+
+    apiUrl = '%s/api/customField/version/%d/do/create?format=json' % (config['Pardot']['url'], int(config['Pardot']['legacy_api_version']))
+    reqData = {
+        'name': fieldLabel,
+        'field_id': fieldApiName
+    }
+    reqHeaders = {
+        'Authorization': 'Bearer '+ config['Salesforce']['access_token'],
+        'Pardot-Business-Unit-Id': config['Pardot']['business_unit_id']
+    }
+    r = requests.post(url=apiUrl, data=reqData, headers=reqHeaders)
+    json = r.json()
+
+    if r.status_code == 200 and json.get('@attributes').get('stat') == 'ok':
+        print('Successfully created %s' % fieldApiName)
+        fieldId = json.get('customField').get('id')
+        storeCreatedCustomField(fieldApiName, fieldId)
+    else:
+        print('Could not create custom field')
+        print(json)
+        sys.exit(2)
+
 def createCustomFields(config, fieldNames, rowNum):
     for fieldName in fieldNames:
-        fieldApiName = config['Field Naming']['api_format'].replace('{d}', str(rowNum)).replace('{field}', fieldName)
-        fieldLabel = config['Field Naming']['human_format'].replace('{d}', str(rowNum)).replace('{field}', fieldName)
-
-        apiUrl = '%s/api/customField/version/%d/do/create?format=json' % (config['Pardot']['url'], int(config['Pardot']['legacy_api_version']))
-        reqData = {
-            'name': fieldLabel,
-            'field_id': fieldApiName
-        }
-        reqHeaders = {
-            'Authorization': 'Bearer '+ config['Salesforce']['access_token'],
-            'Pardot-Business-Unit-Id': config['Pardot']['business_unit_id']
-        }
-        r = requests.post(url=apiUrl, data=reqData, headers=reqHeaders)
-        json = r.json()
-
-        if r.status_code == 200 and json.get('@attributes').get('stat') == 'ok':
-            print('Successfully created %s' % fieldApiName)
-            fieldId = json.get('customField').get('id')
-            storeCreatedCustomField(fieldApiName, fieldId)
-        else:
-            print('Could not create custom field')
-            print(json)
-            sys.exit(2)
+        createCustomField(config, fieldName, str(rowNum))
+        
 
 def storeCreatedCustomField(fieldApiName, fieldId):
     f = open('config/fields.csv','a')

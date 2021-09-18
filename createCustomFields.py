@@ -12,6 +12,10 @@ if os.path.isfile('config/fields.csv'):
     print('This script has already generated fields in the past. Please delete them first using deleteCustomFields.py, then try re-running this script')
     sys.exit(4)
 
+# fields to support the Template, which aren't specific to the number of listings we want to display
+functions.createCustomField(config,'Count','')
+
+
 # loop through number of listings we can have at most in an email
 rowCount = int(config['Field Naming']['listing_count_max'])
 print('need to create %d rows' % rowCount)
