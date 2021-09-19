@@ -85,12 +85,9 @@ def deleteCustomField(config, fieldApiName, fieldId):
         print(json)
         sys.exit(2)
 
-def updateProspect(config, prospectIdentifier, prospectFields):
+def updateProspect(config, prospectId, prospectFields):
     # now we can prepare the API request
-    identifierType='id'
-    if '@' in prospectIdentifier: identifierType = 'email'
-
-    apiUrl = '%s/api/prospect/version/%d/do/update/%s/%s?format=json' % (config['Pardot']['url'], int(config['Pardot']['legacy_api_version']), identifierType, prospectIdentifier)
+    apiUrl = '%s/api/prospect/version/%d/do/update/id/%s?format=json' % (config['Pardot']['url'], int(config['Pardot']['legacy_api_version']), prospectId)
     reqHeaders = {
         'Authorization': 'Bearer '+ config['Salesforce']['access_token'],
         'Pardot-Business-Unit-Id': config['Pardot']['business_unit_id']
@@ -99,16 +96,16 @@ def updateProspect(config, prospectIdentifier, prospectFields):
     json = r.json()
 
     if r.status_code != 200 or json.get('@attributes').get('stat') != 'ok':
-        print('Could not update prospect %s' % prospectIdentifier)
+        print('Could not update prospect %s' % prospectId)
         print(json)
         sys.exit(7)
 
-def updateProspectWithListingInfo(config, prospectIdentifier, listings, agentName):
+def updateProspectWithListingInfo(config, prospectId, listings, agentName):
     # first we need to build our Prospect Update Request data
-    prospectFields = {
-        getFieldName(config, 'Count'): len(listings),
-        getFieldName(config, 'AgentName'): agentName
-    }
+    prospectFields = {}
+    prospectFields[getFieldName(config, 'Count')] = len(listings)
+    prospectFields[getFieldName(config, 'AgentName')] = agentName
+    
     listingNumber=1
     for listing in listings:
         prospectFields[getListingFieldName(config, 'Price', listingNumber)] = listing['price']
@@ -121,13 +118,13 @@ def updateProspectWithListingInfo(config, prospectIdentifier, listings, agentNam
         listingNumber = listingNumber + 1
 
     print(prospectFields)
-    updateProspect(config, prospectIdentifier, prospectFields)
+    updateProspect(config, prospectId, prospectFields)
 
-def updateProspectCleaningListingFields(config, prospectIdentifier, listingCount):
-    prospectFields = {
-        getFieldName(config, 'Count'): ''
-        getFieldName(config, 'AgentName'): ''
-    }
+def updateProspectCleaningListingFields(config, prospectId, listingCount):
+    prospectFields = {}
+    prospectFields[getFieldName(config, 'Count')] = ''
+    prospectFields[getFieldName(config, 'AgentName')] = ''
+
     for i in range(1,listingCount+1):
         prospectFields[getListingFieldName(config, 'Price', i)] = ''
         prospectFields[getListingFieldName(config, 'Bedrooms', i)] = ''
@@ -136,4 +133,4 @@ def updateProspectCleaningListingFields(config, prospectIdentifier, listingCount
         prospectFields[getListingFieldName(config, 'Address', i)] = ''
         prospectFields[getListingFieldName(config, 'ListingUrl', i)] = ''
         prospectFields[getListingFieldName(config, 'ImageUrl', i)] = ''
-    updateProspect(config, prospectIdentifier, prospectFields)
+    updateProspect(config, prospectId, prospectFields)
