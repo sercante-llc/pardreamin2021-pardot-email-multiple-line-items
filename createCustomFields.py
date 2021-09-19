@@ -10,7 +10,7 @@ functions.authenticate(config)
 # make sure we haven't previously created fields
 if os.path.isfile('config/fields.csv'):
     print('This script has already generated fields in the past. Please delete them first using deleteCustomFields.py, then try re-running this script')
-    sys.exit(4)
+    sys.exit(10)
 
 # fields to support the Template, which aren't specific to the number of listings we want to display
 functions.createCustomField(config,'Count','')

@@ -18,7 +18,7 @@ for client in clients:
     print('for %s %s, we will show them %d listings' % (client['firstName'], client['lastName'], len(listings)))
 
     # lets update the prospect to have the right listing info!
-    functions.updateProspectWithListingInfo(config, client['id'], listings, client['agent'])
+    prospectFields = functions.updateProspectWithListingInfo(config, client['id'], listings, client['agent'])
 
     # now that the prospect has been updated, lets send the email
     apiUrl = '%s/api/email/version/%d/do/send/prospect_id/%s?format=json' % (config['Pardot']['url'], int(config['Pardot']['legacy_api_version']), client['id'])
@@ -41,8 +41,8 @@ for client in clients:
     else:
         print('Could not send email to %s' % client['id'])
         print(json)
-        sys.exit(6)
+        sys.exit(40)
 
-    functions.updateProspectCleaningListingFields(config, client['id'], len(listings))
+    functions.updateProspectCleaningListingFields(config, client['id'], prospectFields)
 
 print('Script executed successfully')

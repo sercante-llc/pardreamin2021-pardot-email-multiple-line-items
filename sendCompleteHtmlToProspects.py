@@ -48,6 +48,6 @@ for client in clients:
     else:
         print('Could not send email to %s' % client['id'])
         print(json)
-        sys.exit(5)
+        sys.exit(20)
 
 print('Script executed successfully')
