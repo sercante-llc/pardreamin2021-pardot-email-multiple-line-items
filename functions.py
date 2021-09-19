@@ -83,7 +83,7 @@ def deleteCustomField(config, fieldApiName, fieldId):
     else:
         print('Could not create custom field')
         print(json)
-        sys.exit(2)
+        sys.exit(3)
 
 def updateProspect(config, prospectId, prospectFields):
     # now we can prepare the API request
@@ -98,10 +98,10 @@ def updateProspect(config, prospectId, prospectFields):
     if r.status_code != 200 or json.get('@attributes').get('stat') != 'ok':
         print('Could not update prospect %s' % prospectId)
         print(json)
-        sys.exit(7)
+        sys.exit(4)
 
-def updateProspectWithListingInfo(config, prospectId, listings, agentName):
-    # first we need to build our Prospect Update Request data
+
+def prepareProspectFields(config, listings, agentName):
     prospectFields = {}
     prospectFields[getFieldName(config, 'Count')] = len(listings)
     prospectFields[getFieldName(config, 'AgentName')] = agentName
@@ -116,21 +116,45 @@ def updateProspectWithListingInfo(config, prospectId, listings, agentName):
         prospectFields[getListingFieldName(config, 'ListingUrl', listingNumber)] = listing['listing_url']
         prospectFields[getListingFieldName(config, 'ImageUrl', listingNumber)] = listing['image_url']
         listingNumber = listingNumber + 1
+    return prospectFields
 
-    print(prospectFields)
+
+def updateProspectWithListingInfo(config, prospectId, listings, agentName):
+    # first we need to build our Prospect Update Request data
+    prospectFields = prepareProspectFields(config, listings, agentName)
+    updateProspect(config, prospectId, prospectFields)
+    return prospectFields
+
+def cleanProspectFields(prospectFields):
+    for k,v in prospectFields.items():
+        if k == 'id': continue # we don't want to wipe this out
+        prospectFields[k]=''
+
+def updateProspectCleaningListingFields(config, prospectId, prospectFields):
+    cleanProspectFields(prospectFields)
     updateProspect(config, prospectId, prospectFields)
 
-def updateProspectCleaningListingFields(config, prospectId, listingCount):
-    prospectFields = {}
-    prospectFields[getFieldName(config, 'Count')] = ''
-    prospectFields[getFieldName(config, 'AgentName')] = ''
+def updateBatch(config, batchProspects):
+    reqData = {'prospects': batchProspects }
+    if(int(config['Pardot']['legacy_api_version']) == 3):
+        # we need to adjust the data structure of the request for API version 3
+        reqData = {'prospects': {}}
+        for prospect in batchProspects:  # loop thru each prospect
+            pData = {prospect['id']: {}} # create MAP for the actual Prospect
+            for k,v in prospect.items(): # loop thru each field
+                if k == 'id': continue   # we don't want this in the values
+                pData[prospect['id']][k] = v
 
-    for i in range(1,listingCount+1):
-        prospectFields[getListingFieldName(config, 'Price', i)] = ''
-        prospectFields[getListingFieldName(config, 'Bedrooms', i)] = ''
-        prospectFields[getListingFieldName(config, 'Bathrooms', i)] = ''
-        prospectFields[getListingFieldName(config, 'Sqft', i)] = ''
-        prospectFields[getListingFieldName(config, 'Address', i)] = ''
-        prospectFields[getListingFieldName(config, 'ListingUrl', i)] = ''
-        prospectFields[getListingFieldName(config, 'ImageUrl', i)] = ''
-    updateProspect(config, prospectId, prospectFields)
+    apiUrl = '%s/api/prospect/version/%d/do/batchUpdate?format=json' % (config['Pardot']['url'], int(config['Pardot']['legacy_api_version']))
+    reqHeaders = {
+        'Authorization': 'Bearer '+ config['Salesforce']['access_token'],
+        'Pardot-Business-Unit-Id': config['Pardot']['business_unit_id']
+    }
+    prospectsString = json.dumps(reqData)
+    r = requests.post(url=apiUrl, data={'prospects': prospectsString}, headers=reqHeaders)
+    jsonResponse = r.json()
+
+    if r.status_code != 200 or jsonResponse.get('@attributes').get('stat') != 'ok':
+        print('Could not update batch')
+        print(jsonResponse)
+        sys.exit(5)
