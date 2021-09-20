@@ -28,7 +28,7 @@ for client in clients:
     reqData = {
         # required fields for a one-to-one, providing complete HTML Content and Sender Details (not specifying Pardot User Id)
         'campaign_id': config['Pardot']['campaign_id'],
-        'text_content': 'If you used a real Email Browser, you would see listings. Please join the modern world',
+        'text_content': 'If you used a real Email Browser, you would see listings. Please join the modern world. {{EmailPreferenceCenter}}',
         'name': 'ParDreamin Realty Weekly Email',
         'subject': 'Here are %d Listings Waiting for You!' % len(listings),
         'from_email': 'realty@pardreamin.com',
