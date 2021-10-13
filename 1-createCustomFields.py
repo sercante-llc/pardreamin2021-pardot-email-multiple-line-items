@@ -1,4 +1,10 @@
 #!/usr/bin/env python3
+"""Sets up the Custom Fields needed to support this ParDreamin Demo.
+
+Like all scripts in this project, this script requires that the `config/app.ini`
+file has been set up already. Check out the README.md file in this project for
+more information on configuration.
+"""
 import demoFunctions, os.path, sys
 
 # read our configuration
@@ -19,10 +25,14 @@ demoFunctions.createCustomField(config,'AgentName','')
 
 # loop through number of listings we can have at most in an email
 itemCount = int(config['Field Naming']['listing_count_max'])
-print('need to create {lineItemCount} rows'.format(lineItemCount = itemCount))
+print('need to create {lineItemCount} groups of custom fields'\
+        .format(lineItemCount = itemCount))
+
 for i in range(1,itemCount+1):
     # loop through all the fields, creating them all
-    print('Creating Fields for listing {lineItemNumber}'.format(lineItemNumber = i))
+    print('Creating Fields for listing {lineItemNumber}'\
+            .format(lineItemNumber = i))
+            
     # fields will be named with the prefix defined in app.ini (for example: PD2021_Listing_XXXXXXXX)
     demoFunctions.createCustomFields(config, ['Price','Bedrooms','Bathrooms','Sqft','Address','ListingUrl','ImageUrl'], i)
 
