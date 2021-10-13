@@ -1,7 +1,20 @@
+"""These functions support the rest of the demo.
+
+This file simply provides functions that can be reused. In a real production
+codebase, it would be best to separate different types of logic into their
+own dedicated classes so that they can be reused a little bit better.
+"""
 import configparser, json, requests, sys
 
 def readConfig():
-    #read our app config
+    """Reads configuration from `config/app.ini`, making it available to app
+
+    Returns:
+        A 2 dimensional dict mapping groups and keys to their configuration
+        values. For example:
+
+        config['Pardot']['url'] will provide the Pardot URL for API requests
+    """
     print('Reading configuration from config/app.ini ...')
     config = configparser.ConfigParser()
     config.read('config/app.ini')
@@ -9,6 +22,22 @@ def readConfig():
     return config
 
 def authenticate(config):
+    """Authenticates to Salesforce API using Username/Password Oauth Flow.
+
+    Once authenticated, the accessToken is stored IN MEMORY in the config dict
+    accessible by config['Salesforce']['access_token']
+
+    If possible, it is highly recommended to NOT use the Username/Password
+    Oauth Flow, as it requires your code/configuration to have sensitive
+    information such as password and security token. We recommend using the
+    JWT Bearer flow with a certificate, though chose this approach to keep
+    the demo simple.
+
+    Args:
+        config:
+            The configuration dict that could have been loaded from the
+            readConfig method above in this file
+    """
     print('Authenticating to Salesforce')
     authReqData = {
         'grant_type':'password',
@@ -21,7 +50,7 @@ def authenticate(config):
 
     response = requests.post(tokenUrl, data=authReqData)
 
-    # print(r.json())
+    # print(response.json()) # uncomment this line to view the response JSON if you are having troubles
     if response.status_code == 200:
         print('Got access token, ready to make API requests')
         config['Salesforce']['access_token'] = response.json().get('access_token')
@@ -30,7 +59,29 @@ def authenticate(config):
         print('Status:{}, {}: {}'.format(r.status_code, response.json().get('error'), response.json().get('error_description') ))
         sys.exit(1)
 
+# ****************************************************************************
+# These functions support the set up and tear down of the demo. Useful to look
+# at, but not necessarily required for a solution to work
+# ****************************************************************************
 def createCustomField(config, fieldName, rowNum):
+    """Creates a single Custom Field via Pardot API.
+
+    Upon successful creation of a Custom Field, the file config/fields.csv
+    will be created/appended to include details for the field, so that it can
+    be removed later on
+
+    Args:
+        config:
+            The configuration dict that could have been loaded from the
+            readConfig method above in this file
+        fieldName:
+            The trailing piece of the Field Name, used for both 
+            Label and API name of the Custom Field
+        rowNum:
+            As custom fields might be created for multiple line items, 
+            this arg is used to include the line item number in the
+            Label and API name of the Custom Field
+    """
     fieldApiName = config['Field Naming']['api_format'].replace('{d}', str(rowNum)).replace('{field}', fieldName)
     fieldLabel = config['Field Naming']['human_format'].replace('{d}', str(rowNum)).replace('{field}', fieldName)
 
@@ -62,10 +113,40 @@ def createCustomField(config, fieldName, rowNum):
         sys.exit(2)
 
 def createCustomFields(config, fieldNames, rowNum):
+    """Creates a list of Custom Fields via Pardot API.
+
+    This function simply wraps the previous createCustomField function,
+    creating 1 field at a time.
+
+    Args:
+        config:
+            The configuration dict that could have been loaded from the
+            readConfig method above in this file
+        fieldNames:
+            A list of field names that will be created, used for both
+            Label and API name of the Custom Field
+        rowNum:
+            As custom fields might be created for multiple line items, 
+            this arg is used to include the line item number in the
+            Label and API name of the Custom Field
+    """
     for fieldName in fieldNames:
         createCustomField(config, fieldName, rowNum)
 
 def deleteCustomField(config, fieldApiName, fieldId):
+    """Deletes a single Custom Field via Pardot API.
+
+    Args:
+        config:
+            The configuration dict that could have been loaded from the
+            readConfig method above in this file
+        fieldApiName:
+            The API Name of the Custom Field that is being deleted. Not used
+            in the API request itself, though helpful to display in console
+            output
+        fieldId:
+            The Custom Field Id for the Custom Field in Pardot.
+    """
     apiUrl = '{pardotUrl}/api/customField/version/{legacyVersion}/do/delete/id/{fieldId}?format=json' \
             .format(pardotUrl = config['Pardot']['url'], \
                     legacyVersion=config['Pardot']['legacy_api_version'], \
@@ -81,6 +162,9 @@ def deleteCustomField(config, fieldApiName, fieldId):
         print('Could not create custom field {fieldName}'.format(fieldName=fieldApiName))
         print(json)
         sys.exit(3)
+# ****************************************************************************
+# End of functions that support the set up and tear down of the demo
+# ****************************************************************************
 
 def updateProspect(config, prospectId, prospectFields):
     # now we can prepare the API request
