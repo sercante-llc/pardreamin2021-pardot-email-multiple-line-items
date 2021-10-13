@@ -30,18 +30,12 @@ def authenticate(config):
         print('Status:{}, {}: {}'.format(r.status_code, response.json().get('error'), response.json().get('error_description') ))
         sys.exit(1)
 
-def getListingFieldName(config, name, row):
-    return config['Field Naming']['api_format'].replace('{d}', str(row)).replace('{field}', name)
-
-def getFieldName(config, name):
-    return getListingFieldName(config,name,'')
-
 def createCustomField(config, fieldName, rowNum):
     fieldApiName = config['Field Naming']['api_format'].replace('{d}', str(rowNum)).replace('{field}', fieldName)
     fieldLabel = config['Field Naming']['human_format'].replace('{d}', str(rowNum)).replace('{field}', fieldName)
 
-    apiUrl = '{pardotUrl}/api/customField/version/{legacyVersion}/do/create?format=json'
-            .format(pardotUrl=config['Pardot']['url'], 
+    apiUrl = '{pardotUrl}/api/customField/version/{legacyVersion}/do/create?format=json' \
+            .format(pardotUrl=config['Pardot']['url'], \
                     legacyVersion=config['Pardot']['legacy_api_version'])
 
     reqData = {
@@ -58,7 +52,10 @@ def createCustomField(config, fieldName, rowNum):
     if response.status_code == 200 and json.get('@attributes').get('stat') == 'ok':
         print('Successfully created {fieldName}'.format(fieldName=fieldApiName))
         fieldId = json.get('customField').get('id')
-        storeCreatedCustomField(fieldApiName, fieldId)
+        # store the created field in a CSV so that it can be later deleted
+        f = open('config/fields.csv','a')
+        f.write('{fieldName},{fieldId}\n'.format(fieldName=fieldApiName, fieldId=fieldId))
+        f.close()
     else:
         print('Could not create custom field')
         print(json)
@@ -67,17 +64,11 @@ def createCustomField(config, fieldName, rowNum):
 def createCustomFields(config, fieldNames, rowNum):
     for fieldName in fieldNames:
         createCustomField(config, fieldName, rowNum)
-        
-
-def storeCreatedCustomField(fieldApiName, fieldId):
-    f = open('config/fields.csv','a')
-    f.write('{fieldName},{fieldId}\n'.format(fieldName=fieldApiName, fieldId=fieldId))
-    f.close()
 
 def deleteCustomField(config, fieldApiName, fieldId):
-    apiUrl = '{pardotUrl}/api/customField/version/{legacyVersion}/do/delete/id/{fieldId}?format=json'
-            .format(pardotUrl = config['Pardot']['url'], 
-                    legacyVersion=config['Pardot']['legacy_api_version'], 
+    apiUrl = '{pardotUrl}/api/customField/version/{legacyVersion}/do/delete/id/{fieldId}?format=json' \
+            .format(pardotUrl = config['Pardot']['url'], \
+                    legacyVersion=config['Pardot']['legacy_api_version'], \
                     fieldId=fieldId)
     reqHeaders = {
         'Authorization': 'Bearer '+ config['Salesforce']['access_token'],
@@ -93,9 +84,9 @@ def deleteCustomField(config, fieldApiName, fieldId):
 
 def updateProspect(config, prospectId, prospectFields):
     # now we can prepare the API request
-    apiUrl = '{pardotUrl}/api/prospect/version/{legacyVersion}/do/update/id/{prospectId}?format=json'
-            .format(pardotUrl = config['Pardot']['url'], 
-                    legacyVersion = config['Pardot']['legacy_api_version'], 
+    apiUrl = '{pardotUrl}/api/prospect/version/{legacyVersion}/do/update/id/{prospectId}?format=json' \
+            .format(pardotUrl = config['Pardot']['url'], \
+                    legacyVersion = config['Pardot']['legacy_api_version'], \
                     prospectId = prospectId)
 
     reqHeaders = {
@@ -110,24 +101,57 @@ def updateProspect(config, prospectId, prospectFields):
         print(json)
         sys.exit(4)
 
-
 def prepareProspectFields(config, listings, agentName):
     prospectFields = {}
-    prospectFields[getFieldName(config, 'Count')] = len(listings)
-    prospectFields[getFieldName(config, 'AgentName')] = agentName
+    listingCountFieldName = config['Field Naming']['api_format'] \
+        .replace('{d}', '') \
+        .replace('{field}', 'Count')
+    prospectFields[listingCountFieldName] = len(listings)
+
+    agentNameFieldName = config['Field Naming']['api_format'] \
+        .replace('{d}', '') \
+        .replace('{field}', 'AgentName')
+    prospectFields[agentNameFieldName] = agentName
     
     listingNumber=1
     for listing in listings:
-        prospectFields[getListingFieldName(config, 'Price', listingNumber)] = listing['price']
-        prospectFields[getListingFieldName(config, 'Bedrooms', listingNumber)] = listing['bedrooms']
-        prospectFields[getListingFieldName(config, 'Bathrooms', listingNumber)] = listing['bathrooms']
-        prospectFields[getListingFieldName(config, 'Sqft', listingNumber)] = listing['sqft']
-        prospectFields[getListingFieldName(config, 'Address', listingNumber)] = listing['address']
-        prospectFields[getListingFieldName(config, 'ListingUrl', listingNumber)] = listing['listing_url']
-        prospectFields[getListingFieldName(config, 'ImageUrl', listingNumber)] = listing['image_url']
+        priceFieldName = config['Field Naming']['api_format'] \
+            .replace('{d}', str(listingNumber)) \
+            .replace('{field}', 'Price')
+        prospectFields[priceFieldName] = listing['price']
+
+        bedroomsFieldName = config['Field Naming']['api_format'] \
+            .replace('{d}', str(listingNumber)) \
+            .replace('{field}', 'Bedrooms')
+        prospectFields[bedroomsFieldName] = listing['bedrooms']
+
+        bathroomsFieldName = config['Field Naming']['api_format'] \
+            .replace('{d}', str(listingNumber)) \
+            .replace('{field}', 'Bathrooms')
+        prospectFields[bathroomsFieldName] = listing['bathrooms']
+
+        sqftFieldName = config['Field Naming']['api_format'] \
+            .replace('{d}', str(listingNumber)) \
+            .replace('{field}', 'Sqft')
+        prospectFields[sqftFieldName] = listing['sqft']
+
+        addressFieldName = config['Field Naming']['api_format'] \
+            .replace('{d}', str(listingNumber)) \
+            .replace('{field}', 'Address')
+        prospectFields[addressFieldName] = listing['fullAddress']
+
+        listingUrlFieldName = config['Field Naming']['api_format'] \
+            .replace('{d}', str(listingNumber)) \
+            .replace('{field}', 'ListingUrl')
+        prospectFields[listingUrlFieldName] = listing['listing_url']
+
+        imageUrlFieldName = config['Field Naming']['api_format'] \
+            .replace('{d}', str(listingNumber)) \
+            .replace('{field}', 'ImageUrl')
+        prospectFields[imageUrlFieldName] = listing['image_url']
+        
         listingNumber = listingNumber + 1
     return prospectFields
-
 
 def updateProspectWithListingInfo(config, prospectId, listings, agentName):
     # first we need to build our Prospect Update Request data
@@ -155,8 +179,8 @@ def updateBatch(config, batchProspects):
                 if k == 'id': continue   # we don't want this in the values
                 pData[prospect['id']][k] = v
 
-    apiUrl = '{pardotUrl}/api/prospect/version/{legacyVersion}/do/batchUpdate?format=json'
-            .format(pardotUrl = config['Pardot']['url'], 
+    apiUrl = '{pardotUrl}/api/prospect/version/{legacyVersion}/do/batchUpdate?format=json' \
+            .format(pardotUrl = config['Pardot']['url'], \
                     legacyVersion = config['Pardot']['legacy_api_version'])
 
     reqHeaders = {
