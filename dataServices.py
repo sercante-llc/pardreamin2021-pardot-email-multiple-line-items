@@ -15,7 +15,7 @@ class ListingService:
                 listings.append(row)
         return listings
 
-    def getListingsForEmail(self, emailAddress):
+    def getListingsForRecipientId(self, recipientId):
         numberOfListings = random.randint(self._minListings, self._maxListings)
         listings = []
         for i in range(0,numberOfListings):
@@ -23,19 +23,19 @@ class ListingService:
             listings.append(self._listings[randomListingIndex])
         return listings
 
-class ClientService:
+class RecipientService:
     def __init__(self, config):
-        self._clients = self._readClients()
+        self._recipients = self._readRecipients()
 
-    def _readClients(self):
-        clients = []
+    def _readRecipients(self):
+        recipients = []
         
         with open('data/clients.csv','r') as csvFile:
             csvReader = csv.DictReader(csvFile)
             for row in csvReader:
-                clients.append(row)
+                recipients.append(row)
 
-        return clients
+        return recipients
     
-    def getClientsNeedingWeeklyEmail(self):
-        return self._clients
+    def getRecipientsNeedingWeeklyEmail(self):
+        return self._recipients
