@@ -40,10 +40,10 @@ for recipient in recipients:
         'Pardot-Business-Unit-Id': config['Pardot']['business_unit_id']
     }
 
-    r = requests.post(url=apiUrl, data=reqData, headers=reqHeaders)
-    json = r.json()
+    response = requests.post(url=apiUrl, data=reqData, headers=reqHeaders)
+    json = response.json()
 
-    if r.status_code == 200 and json.get('@attributes').get('stat') == 'ok':
+    if response.status_code == 200 and json.get('@attributes').get('stat') == 'ok':
         print('Successfully sent email to %s' % recipient['prospectId'])
     else:
         print('Could not send email to %s' % recipient['prospectId'])

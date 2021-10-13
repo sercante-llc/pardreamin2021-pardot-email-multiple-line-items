@@ -19,15 +19,15 @@ def authenticate(config):
     }
     tokenUrl = config['Salesforce']['url'] + '/services/oauth2/token'
 
-    r = requests.post(tokenUrl, data=authReqData)
+    response = requests.post(tokenUrl, data=authReqData)
 
     # print(r.json())
-    if r.status_code == 200:
+    if response.status_code == 200:
         print('Got access token, ready to make API requests')
-        config['Salesforce']['access_token'] = r.json().get('access_token')
+        config['Salesforce']['access_token'] = response.json().get('access_token')
     else:
         print('Had trouble getting access token. Make sure User and Connected App are correctly configured in config/app.ini')
-        print('Status:{}, {}: {}'.format(r.status_code, r.json().get('error'), r.json().get('error_description') ))
+        print('Status:{}, {}: {}'.format(r.status_code, response.json().get('error'), response.json().get('error_description') ))
         sys.exit(1)
 
 def getListingFieldName(config, name, row):
@@ -49,10 +49,10 @@ def createCustomField(config, fieldName, rowNum):
         'Authorization': 'Bearer '+ config['Salesforce']['access_token'],
         'Pardot-Business-Unit-Id': config['Pardot']['business_unit_id']
     }
-    r = requests.post(url=apiUrl, data=reqData, headers=reqHeaders)
-    json = r.json()
+    response = requests.post(url=apiUrl, data=reqData, headers=reqHeaders)
+    json = response.json()
 
-    if r.status_code == 200 and json.get('@attributes').get('stat') == 'ok':
+    if response.status_code == 200 and json.get('@attributes').get('stat') == 'ok':
         print('Successfully created %s' % fieldApiName)
         fieldId = json.get('customField').get('id')
         storeCreatedCustomField(fieldApiName, fieldId)
@@ -77,8 +77,8 @@ def deleteCustomField(config, fieldApiName, fieldId):
         'Authorization': 'Bearer '+ config['Salesforce']['access_token'],
         'Pardot-Business-Unit-Id': config['Pardot']['business_unit_id']
     }
-    r = requests.delete(url=apiUrl,headers=reqHeaders)
-    if r.status_code == 204:
+    response = requests.delete(url=apiUrl,headers=reqHeaders)
+    if response.status_code == 204:
         print('Successfully deleted %s' % fieldApiName)
     else:
         print('Could not create custom field')
@@ -92,10 +92,10 @@ def updateProspect(config, prospectId, prospectFields):
         'Authorization': 'Bearer '+ config['Salesforce']['access_token'],
         'Pardot-Business-Unit-Id': config['Pardot']['business_unit_id']
     }
-    r = requests.post(url=apiUrl, data=prospectFields, headers=reqHeaders)
-    json = r.json()
+    response = requests.post(url=apiUrl, data=prospectFields, headers=reqHeaders)
+    json = response.json()
 
-    if r.status_code != 200 or json.get('@attributes').get('stat') != 'ok':
+    if response.status_code != 200 or json.get('@attributes').get('stat') != 'ok':
         print('Could not update prospect %s' % prospectId)
         print(json)
         sys.exit(4)
@@ -151,10 +151,10 @@ def updateBatch(config, batchProspects):
         'Pardot-Business-Unit-Id': config['Pardot']['business_unit_id']
     }
     prospectsString = json.dumps(reqData)
-    r = requests.post(url=apiUrl, data={'prospects': prospectsString}, headers=reqHeaders)
-    jsonResponse = r.json()
+    response = requests.post(url=apiUrl, data={'prospects': prospectsString}, headers=reqHeaders)
+    jsonResponse = response.json()
 
-    if r.status_code != 200 or jsonResponse.get('@attributes').get('stat') != 'ok':
+    if response.status_code != 200 or jsonResponse.get('@attributes').get('stat') != 'ok':
         print('Could not update batch')
         print(jsonResponse)
         sys.exit(5)

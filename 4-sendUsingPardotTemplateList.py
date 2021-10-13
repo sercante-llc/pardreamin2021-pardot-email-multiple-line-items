@@ -59,10 +59,10 @@ reqHeaders = {
     'Pardot-Business-Unit-Id': config['Pardot']['business_unit_id']
 }
 print(reqData)
-r = requests.post(url=apiUrl, data=reqData, headers=reqHeaders)
-json = r.json()
+response = requests.post(url=apiUrl, data=reqData, headers=reqHeaders)
+json = response.json()
 
-if r.status_code == 200 and json.get('@attributes').get('stat') == 'ok':
+if response.status_code == 200 and json.get('@attributes').get('stat') == 'ok':
     print('Successfully sent email to list %s' % config['Pardot']['sending_list_id'] )
 else:
     print('Could not send email to list %s' % config['Pardot']['sending_list_id'] )
