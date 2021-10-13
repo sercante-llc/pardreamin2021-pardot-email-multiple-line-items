@@ -1,4 +1,4 @@
-id,price,bedrooms,bathrooms,sqft,address,listing_url,image_url
+id,price,bedrooms,bathrooms,sqft,fullAddress,listing_url,image_url
 M94892-32074,"$340,000",3,2.5,2509,"3966 Lake Manor Way, Atlanta, GA 30349",https://www.realtor.com/realestateandhomes-detail/3966-Lake-Manor-Way_Atlanta_GA_30349_M94892-32074?ex=GA2934389751,https://www.compass.com/m2/482824a8c7c0b947cb9e441c4bf464fc771640b7_img_0/origin.jpg
 M52035-45330,"$339,000",3,2,1582,"2117 Beecher Cir SW, Atlanta, GA 30311",https://www.realtor.com/realestateandhomes-detail/2117-Beecher-Cir-SW_Atlanta_GA_30311_M52035-45330?ex=GA2934365996,https://ssl.cdn-redfin.com/photo/82/bigphoto/306/6945306_0.jpg
 M53022-18025,"$339,900",4,2.5,2138,"90 Park Ave SE, Atlanta, GA 30315",https://www.realtor.com/realestateandhomes-detail/90-Park-Ave-SE_Atlanta_GA_30315_M53022-18025,https://ssl.cdn-redfin.com/photo/82/bigphoto/587/6945587_0.jpg
