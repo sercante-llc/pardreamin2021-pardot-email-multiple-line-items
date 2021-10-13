@@ -13,7 +13,10 @@ with open('config/fields.csv','r') as csvFile:
     for row in csvReader:
         fieldApiName = row[0]
         fieldId = int(row[1])
-        print('removing Custom field %s with id %d' % (fieldApiName, fieldId))
+        print('removing Custom field {fieldApiName} with id {fieldId}'
+                .format(fieldApiName = fieldApiName, fieldId = fieldId))
+
         functions.deleteCustomField(config, fieldApiName, fieldId)
+
 os.remove('config/fields.csv')
 print('Done removing fields, file config/fields.csv removed')

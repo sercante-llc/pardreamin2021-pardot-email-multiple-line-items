@@ -20,14 +20,18 @@ batches = []
 for recipient in recipients:
     # get the listings we want to share with this recipient
     listings = listingService.getListingsForRecipientId(recipient['id'])
-    print('for %s %s, we will show them %d listings' % (recipient['firstName'], recipient['lastName'], len(listings)))
+    print('for {firstName} {lastName}, we will show them {itemCount} listings'
+            .format(firstName = recipient['firstName'], 
+                    lastName = recipient['lastName'], 
+                    itemCount = len(listings)))
+
     prospectFields = demoFunctions.prepareProspectFields(config, listings, recipient['agent'])
     prospectFields['id'] = recipient['prospectId']
     batchProspects.append(prospectFields)
     batchSize = batchSize + 1
     if batchSize == maxBatchSize:
         # we need to update the batch in Pardot
-        print('updating batch of %d Prospects' % maxBatchSize)
+        print('updating batch of {batchSize} Prospects'.format(batchSize = maxBatchSize))
         demoFunctions.updateBatch(config, batchProspects)
         batches.append(batchProspects)
         batchProspects = []
@@ -35,7 +39,7 @@ for recipient in recipients:
 
 # once we've processed all recipients, we may have an incomplete batch
 if batchSize > 0:
-    print('updating final batch of %d Prospects' % batchSize)
+    print('updating final batch of {batchSize} Prospects'.format(batchSize = batchSize))
     # we need to update the batch in Pardot
     demoFunctions.updateBatch(config, batchProspects)
     batches.append(batchProspects)
@@ -46,7 +50,9 @@ print('done updating prospects, sending email now')
 
 
 # a single API call to send the email to the List
-apiUrl = '%s/api/email/version/%d/do/send/?format=json' % (config['Pardot']['url'], int(config['Pardot']['legacy_api_version']))
+apiUrl = '{pardotUrl}/api/email/version/{legacyVersion}/do/send/?format=json'
+        .format(pardotUrl = config['Pardot']['url'], 
+                legacyVersion = config['Pardot']['legacy_api_version'])
 print(apiUrl)
 reqData = {
     # required fields for a one-to-one, providing complete HTML Content and Sender Details (not specifying Pardot User Id)
@@ -63,17 +69,17 @@ response = requests.post(url=apiUrl, data=reqData, headers=reqHeaders)
 json = response.json()
 
 if response.status_code == 200 and json.get('@attributes').get('stat') == 'ok':
-    print('Successfully sent email to list %s' % config['Pardot']['sending_list_id'] )
+    print('Successfully sent email to list {pardotListId}'.format(pardotListId = config['Pardot']['sending_list_id'] ))
 else:
-    print('Could not send email to list %s' % config['Pardot']['sending_list_id'] )
+    print('Could not send email to list {pardotListId}'.format(pardotListId = config['Pardot']['sending_list_id'] ))
     print(json)
     sys.exit(30)
 
 print('email sent, cleaning prospect custom fields')
 # now lets clean the prospect data up
-print('batch count: %d' % len(batches))
+print('batch count: {batchCount}'.format(batchCount=len(batches)))
 for batch in batches:
-    print('batch has %d prospects' % len(batch))
+    print('batch has {prospectCount} prospects'.format(prospectCount = len(batch)))
     for prospect in batch:
         demoFunctions.cleanProspectFields(prospect)
     demoFunctions.updateBatch(config, batch)

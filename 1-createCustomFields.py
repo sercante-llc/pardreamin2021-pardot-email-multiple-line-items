@@ -18,11 +18,11 @@ demoFunctions.createCustomField(config,'AgentName','')
 
 
 # loop through number of listings we can have at most in an email
-rowCount = int(config['Field Naming']['listing_count_max'])
-print('need to create %d rows' % rowCount)
-for i in range(1,rowCount+1):
+itemCount = int(config['Field Naming']['listing_count_max'])
+print('need to create {lineItemCount} rows'.format(lineItemCount = itemCount))
+for i in range(1,itemCount+1):
     # loop through all the fields, creating them all
-    print('Creating Fields for listing %d' % i)
+    print('Creating Fields for listing {lineItemNumber}'.format(lineItemNumber = i))
     # fields will be named with the prefix defined in app.ini (for example: PD2021_Listing_XXXXXXXX)
     demoFunctions.createCustomFields(config, ['Price','Bedrooms','Bathrooms','Sqft','Address','ListingUrl','ImageUrl'], i)
 

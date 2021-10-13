@@ -37,10 +37,13 @@ def getFieldName(config, name):
     return getListingFieldName(config,name,'')
 
 def createCustomField(config, fieldName, rowNum):
-    fieldApiName = getListingFieldName(config,fieldName,rowNum)
+    fieldApiName = config['Field Naming']['api_format'].replace('{d}', str(rowNum)).replace('{field}', fieldName)
     fieldLabel = config['Field Naming']['human_format'].replace('{d}', str(rowNum)).replace('{field}', fieldName)
 
-    apiUrl = '%s/api/customField/version/%d/do/create?format=json' % (config['Pardot']['url'], int(config['Pardot']['legacy_api_version']))
+    apiUrl = '{pardotUrl}/api/customField/version/{legacyVersion}/do/create?format=json'
+            .format(pardotUrl=config['Pardot']['url'], 
+                    legacyVersion=config['Pardot']['legacy_api_version'])
+
     reqData = {
         'name': fieldLabel,
         'field_id': fieldApiName
@@ -53,7 +56,7 @@ def createCustomField(config, fieldName, rowNum):
     json = response.json()
 
     if response.status_code == 200 and json.get('@attributes').get('stat') == 'ok':
-        print('Successfully created %s' % fieldApiName)
+        print('Successfully created {fieldName}'.format(fieldName=fieldApiName))
         fieldId = json.get('customField').get('id')
         storeCreatedCustomField(fieldApiName, fieldId)
     else:
@@ -68,26 +71,33 @@ def createCustomFields(config, fieldNames, rowNum):
 
 def storeCreatedCustomField(fieldApiName, fieldId):
     f = open('config/fields.csv','a')
-    f.write('%s,%d\n' % (fieldApiName, fieldId))
+    f.write('{fieldName},{fieldId}\n'.format(fieldName=fieldApiName, fieldId=fieldId))
     f.close()
 
 def deleteCustomField(config, fieldApiName, fieldId):
-    apiUrl = '%s/api/customField/version/%d/do/delete/id/%d?format=json' % (config['Pardot']['url'], int(config['Pardot']['legacy_api_version']), fieldId)
+    apiUrl = '{pardotUrl}/api/customField/version/{legacyVersion}/do/delete/id/{fieldId}?format=json'
+            .format(pardotUrl = config['Pardot']['url'], 
+                    legacyVersion=config['Pardot']['legacy_api_version'], 
+                    fieldId=fieldId)
     reqHeaders = {
         'Authorization': 'Bearer '+ config['Salesforce']['access_token'],
         'Pardot-Business-Unit-Id': config['Pardot']['business_unit_id']
     }
     response = requests.delete(url=apiUrl,headers=reqHeaders)
     if response.status_code == 204:
-        print('Successfully deleted %s' % fieldApiName)
+        print('Successfully deleted {fieldName}'.format(fieldName=fieldApiName))
     else:
-        print('Could not create custom field')
+        print('Could not create custom field {fieldName}'.format(fieldName=fieldApiName))
         print(json)
         sys.exit(3)
 
 def updateProspect(config, prospectId, prospectFields):
     # now we can prepare the API request
-    apiUrl = '%s/api/prospect/version/%d/do/update/id/%s?format=json' % (config['Pardot']['url'], int(config['Pardot']['legacy_api_version']), prospectId)
+    apiUrl = '{pardotUrl}/api/prospect/version/{legacyVersion}/do/update/id/{prospectId}?format=json'
+            .format(pardotUrl = config['Pardot']['url'], 
+                    legacyVersion = config['Pardot']['legacy_api_version'], 
+                    prospectId = prospectId)
+
     reqHeaders = {
         'Authorization': 'Bearer '+ config['Salesforce']['access_token'],
         'Pardot-Business-Unit-Id': config['Pardot']['business_unit_id']
@@ -96,7 +106,7 @@ def updateProspect(config, prospectId, prospectFields):
     json = response.json()
 
     if response.status_code != 200 or json.get('@attributes').get('stat') != 'ok':
-        print('Could not update prospect %s' % prospectId)
+        print('Could not update prospect {}'.format(prospectId))
         print(json)
         sys.exit(4)
 
@@ -145,7 +155,10 @@ def updateBatch(config, batchProspects):
                 if k == 'id': continue   # we don't want this in the values
                 pData[prospect['id']][k] = v
 
-    apiUrl = '%s/api/prospect/version/%d/do/batchUpdate?format=json' % (config['Pardot']['url'], int(config['Pardot']['legacy_api_version']))
+    apiUrl = '{pardotUrl}/api/prospect/version/{legacyVersion}/do/batchUpdate?format=json'
+            .format(pardotUrl = config['Pardot']['url'], 
+                    legacyVersion = config['Pardot']['legacy_api_version'])
+
     reqHeaders = {
         'Authorization': 'Bearer '+ config['Salesforce']['access_token'],
         'Pardot-Business-Unit-Id': config['Pardot']['business_unit_id']
