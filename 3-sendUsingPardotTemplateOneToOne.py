@@ -15,18 +15,18 @@ recipients = recipientService.getRecipientsNeedingWeeklyEmail()
 for recipient in recipients:
     # get the listings we want to share with the recipient
     listings = listingService.getListingsForRecipientId(recipient['id'])
-    print('for {firstName} {lastName}, we will show them {itemCount} listings'
-            .format(firstName = recipient['firstName'], 
-                    lastName = recipient['lastName'], 
+    print('for {firstName} {lastName}, we will show them {itemCount} listings' \
+            .format(firstName = recipient['firstName'], \
+                    lastName = recipient['lastName'], \
                     itemCount = len(listings)))
 
     # lets update the prospect to have the right listing info!
     prospectFields = demoFunctions.updateProspectWithListingInfo(config, recipient['prospectId'], listings, recipient['agent'])
 
     # now that the prospect has been updated, lets send the email
-    apiUrl = '{pardotUrl}/api/email/version/{legacyVersion}/do/send/prospect_id/{prospectId}?format=json'
-            .format(pardotUrl = config['Pardot']['url'], 
-                    legacyVersion = config['Pardot']['legacy_api_version'], 
+    apiUrl = '{pardotUrl}/api/email/version/{legacyVersion}/do/send/prospect_id/{prospectId}?format=json' \
+            .format(pardotUrl = config['Pardot']['url'], \
+                    legacyVersion = config['Pardot']['legacy_api_version'], \
                     prospectId = recipient['prospectId'])
     print(apiUrl)
     reqData = {
@@ -42,7 +42,7 @@ for recipient in recipients:
     response= requests.post(url=apiUrl, data=reqData, headers=reqHeaders)
     json = response.json()
 
-    if rresponse.status_code == 200 and json.get('@attributes').get('stat') == 'ok':
+    if response.status_code == 200 and json.get('@attributes').get('stat') == 'ok':
         print('Successfully sent email to {prospectId}'.format(prospectId = recipient['prospectId']))
     else:
         print('Could not send email to {prospectId}'.format(prospectId = recipient['prospectId']))

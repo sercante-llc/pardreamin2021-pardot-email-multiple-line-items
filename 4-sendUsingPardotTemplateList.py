@@ -20,9 +20,9 @@ batches = []
 for recipient in recipients:
     # get the listings we want to share with this recipient
     listings = listingService.getListingsForRecipientId(recipient['id'])
-    print('for {firstName} {lastName}, we will show them {itemCount} listings'
-            .format(firstName = recipient['firstName'], 
-                    lastName = recipient['lastName'], 
+    print('for {firstName} {lastName}, we will show them {itemCount} listings' \
+            .format(firstName = recipient['firstName'], \
+                    lastName = recipient['lastName'], \
                     itemCount = len(listings)))
 
     prospectFields = demoFunctions.prepareProspectFields(config, listings, recipient['agent'])
@@ -50,8 +50,8 @@ print('done updating prospects, sending email now')
 
 
 # a single API call to send the email to the List
-apiUrl = '{pardotUrl}/api/email/version/{legacyVersion}/do/send/?format=json'
-        .format(pardotUrl = config['Pardot']['url'], 
+apiUrl = '{pardotUrl}/api/email/version/{legacyVersion}/do/send/?format=json' \
+        .format(pardotUrl = config['Pardot']['url'], \
                 legacyVersion = config['Pardot']['legacy_api_version'])
 print(apiUrl)
 reqData = {

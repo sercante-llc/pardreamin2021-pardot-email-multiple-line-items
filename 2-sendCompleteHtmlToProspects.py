@@ -19,17 +19,17 @@ recipients = recipientService.getRecipientsNeedingWeeklyEmail()
 for recipient in recipients:
     # get the listings we want to share with the recipient
     listings = listingService.getListingsForRecipientId(recipient['id'])
-    print('for {firstName} {lastName}, we will show them {itemCount} listings'
-            .format(firstName = recipient['firstName'], 
-                    lastName = recipient['lastName'], 
+    print('for {firstName} {lastName}, we will show them {itemCount} listings' \
+            .format(firstName = recipient['firstName'], \
+                    lastName = recipient['lastName'], \
                     itemCount = len(listings)))
                     
     emailHtml = mailTemplate.render(listings=listings, recipient=recipient)
 
     # now that we've assembled our own HTML, we can send this directly to Pardot    
-    apiUrl = '{pardotUrl}/api/email/version/{legacyVersion}/do/send/prospect_id/{prospectId}?format=json'
-            .format(pardotUrl = config['Pardot']['url'], 
-                    legacyVersion = config['Pardot']['legacy_api_version'], 
+    apiUrl = '{pardotUrl}/api/email/version/{legacyVersion}/do/send/prospect_id/{prospectId}?format=json' \
+            .format(pardotUrl = config['Pardot']['url'], \
+                    legacyVersion = config['Pardot']['legacy_api_version'], \
                     prospectId = recipient['prospectId'])
 
     print(apiUrl)
