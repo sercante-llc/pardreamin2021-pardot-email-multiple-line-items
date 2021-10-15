@@ -21,7 +21,47 @@ for recipient in recipients:
                     itemCount = len(listings)))
 
     # lets update the prospect to have the right listing info!
-    prospectFields = demoFunctions.updateProspectWithListingInfo(config, recipient['prospectId'], listings, recipient['agent'])
+    # first we need to build our Prospect Update Request data
+    prospectFields = {}
+    fieldNameFormat = config['Field Naming']['api_format']
+    # these 2 fields are not line-item dependant, so we keep them out of a loop
+    listingCountFieldName = fieldNameFormat.format(field='Count', lineItemNumber='')
+    prospectFields[listingCountFieldName] = len(listings)
+
+    agentNameFieldName = fieldNameFormat.format(field='AgentName', lineItemNumber='')
+    prospectFields[agentNameFieldName] = recipient['agent']
+    
+    # now we loop through the listings
+    listingNumber=1
+    for listing in listings:
+        # here we "build" the field name, taking into consideration the 
+        # - "line item field" 
+        # - "listing number", or the LineItemNumber
+        priceFieldName = fieldNameFormat.format(field='Price', lineItemNumber=listingNumber)
+        prospectFields[priceFieldName] = listing['price']
+        # repeat for each field
+        bedroomsFieldName = fieldNameFormat.format(field='Bedrooms', lineItemNumber=listingNumber)
+        prospectFields[bedroomsFieldName] = listing['bedrooms']
+
+        bathroomsFieldName = fieldNameFormat.format(field='Bathrooms', lineItemNumber=listingNumber)
+        prospectFields[bathroomsFieldName] = listing['bathrooms']
+
+        sqftFieldName = fieldNameFormat.format(field='Sqft', lineItemNumber=listingNumber)
+        prospectFields[sqftFieldName] = listing['sqft']
+
+        addressFieldName = fieldNameFormat.format(field='Address', lineItemNumber=listingNumber)
+        prospectFields[addressFieldName] = listing['fullAddress']
+
+        listingUrlFieldName = fieldNameFormat.format(field='ListingUrl', lineItemNumber=listingNumber)
+        prospectFields[listingUrlFieldName] = listing['listing_url']
+
+        imageUrlFieldName = fieldNameFormat.format(field='ImageUrl', lineItemNumber=listingNumber)
+        prospectFields[imageUrlFieldName] = listing['image_url']
+        
+        listingNumber = listingNumber + 1
+
+    # once we have all our Pardot Field updates ready, let's tell the API to make the Prospect Update
+    demoFunctions.updateProspect(config, recipient['prospectId'], prospectFields)
 
     # now that the prospect has been updated, lets send the email
     apiUrl = '{pardotUrl}/api/email/version/{legacyVersion}/do/send/prospect_id/{prospectId}?format=json' \
@@ -49,6 +89,11 @@ for recipient in recipients:
         print(json)
         sys.exit(40)
 
-    demoFunctions.updateProspectCleaningListingFields(config, recipient['prospectId'], prospectFields)
+    # a really good idea is to now clean the Prospect Fields so that they aren't left with dirty data
+    # which could mess up a send later on
+    for k,v in prospectFields.items():
+        if k == 'id': continue # we don't want to wipe this value out
+        prospectFields[k]=''
+    demoFunctions.updateProspect(config, recipient['prospectId'], prospectFields)
 
 print('Script executed successfully')

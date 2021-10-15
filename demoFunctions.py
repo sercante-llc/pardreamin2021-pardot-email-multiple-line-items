@@ -167,6 +167,21 @@ def deleteCustomField(config, fieldApiName, fieldId):
 # ****************************************************************************
 
 def updateProspect(config, prospectId, prospectFields):
+    """Updates a single Pardot Prospect via the Pardot API.
+
+    This demo takes the approach of using the Pardot Prospect ID. Depending on
+    the version of the API you are using, you may be able to use email, crm id
+
+    Args:
+        config:
+            The configuration dict that could have been loaded from the
+            readConfig method above in this file
+        prospectId:
+            The Pardot ID of the Prospect that we are updating.
+        prospectFields:
+            A dict which represents Pardot Field API Name and Value key/pairs,
+            which we want to update for the Prospect Record
+    """
     # now we can prepare the API request
     apiUrl = '{pardotUrl}/api/prospect/version/{legacyVersion}/do/update/id/{prospectId}?format=json' \
             .format(pardotUrl = config['Pardot']['url'], \
@@ -186,82 +201,109 @@ def updateProspect(config, prospectId, prospectFields):
         sys.exit(4)
 
 def prepareProspectFields(config, listings, agentName):
+    """Prepares Prospect Field values for a bunch of listings, for later update.
+
+    This approach takes a mix of preparing Prospect email-specific fields
+    (such as Agent Name and Number of Listings) as well as the fields for
+    allowing all Listing info to be present.
+
+    Args:
+        config:
+            The configuration dict that could have been loaded from the
+            readConfig method above in this file
+        listings:
+            A list of listings (or line items) that are to be flattened onto
+            a Prospect record
+        agentName:
+            The name of the Real Estate Agent that should be used, part of the
+            Email Template.
+    Returns:
+        a dict containing the Prospect Field Name (key) and Value for each
+        Pardot field that needs to be updated
+    """
+    # first we need to build our Prospect Update Request data
     prospectFields = {}
-    listingCountFieldName = config['Field Naming']['api_format'] \
-        .replace('{d}', '') \
-        .replace('{field}', 'Count')
+    fieldNameFormat = config['Field Naming']['api_format']
+
+    # these 2 fields are not line-item dependant, so we keep them out of a loop
+    listingCountFieldName = fieldNameFormat.format(field='Count', lineItemNumber='')
     prospectFields[listingCountFieldName] = len(listings)
 
-    agentNameFieldName = config['Field Naming']['api_format'] \
-        .replace('{d}', '') \
-        .replace('{field}', 'AgentName')
-    prospectFields[agentNameFieldName] = agentName
+    agentNameFieldName = fieldNameFormat.format(field='AgentName', lineItemNumber='')
+    prospectFields[agentNameFieldName] = recipient['agent']
     
+    # now we loop through the listings
     listingNumber=1
     for listing in listings:
-        priceFieldName = config['Field Naming']['api_format'] \
-            .replace('{d}', str(listingNumber)) \
-            .replace('{field}', 'Price')
+        # here we "build" the field name, taking into consideration the 
+        # - "line item field" 
+        # - "listing number", or the LineItemNumber
+        priceFieldName = fieldNameFormat.format(field='Price', lineItemNumber=listingNumber)
         prospectFields[priceFieldName] = listing['price']
-
-        bedroomsFieldName = config['Field Naming']['api_format'] \
-            .replace('{d}', str(listingNumber)) \
-            .replace('{field}', 'Bedrooms')
+        # repeat for each field
+        bedroomsFieldName = fieldNameFormat.format(field='Bedrooms', lineItemNumber=listingNumber)
         prospectFields[bedroomsFieldName] = listing['bedrooms']
 
-        bathroomsFieldName = config['Field Naming']['api_format'] \
-            .replace('{d}', str(listingNumber)) \
-            .replace('{field}', 'Bathrooms')
+        bathroomsFieldName = fieldNameFormat.format(field='Bathrooms', lineItemNumber=listingNumber)
         prospectFields[bathroomsFieldName] = listing['bathrooms']
 
-        sqftFieldName = config['Field Naming']['api_format'] \
-            .replace('{d}', str(listingNumber)) \
-            .replace('{field}', 'Sqft')
+        sqftFieldName = fieldNameFormat.format(field='Sqft', lineItemNumber=listingNumber)
         prospectFields[sqftFieldName] = listing['sqft']
 
-        addressFieldName = config['Field Naming']['api_format'] \
-            .replace('{d}', str(listingNumber)) \
-            .replace('{field}', 'Address')
+        addressFieldName = fieldNameFormat.format(field='Address', lineItemNumber=listingNumber)
         prospectFields[addressFieldName] = listing['fullAddress']
 
-        listingUrlFieldName = config['Field Naming']['api_format'] \
-            .replace('{d}', str(listingNumber)) \
-            .replace('{field}', 'ListingUrl')
+        listingUrlFieldName = fieldNameFormat.format(field='ListingUrl', lineItemNumber=listingNumber)
         prospectFields[listingUrlFieldName] = listing['listing_url']
 
-        imageUrlFieldName = config['Field Naming']['api_format'] \
-            .replace('{d}', str(listingNumber)) \
-            .replace('{field}', 'ImageUrl')
+        imageUrlFieldName = fieldNameFormat.format(field='ImageUrl', lineItemNumber=listingNumber)
         prospectFields[imageUrlFieldName] = listing['image_url']
         
         listingNumber = listingNumber + 1
     return prospectFields
 
-def updateProspectWithListingInfo(config, prospectId, listings, agentName):
-    # first we need to build our Prospect Update Request data
-    prospectFields = prepareProspectFields(config, listings, agentName)
-    updateProspect(config, prospectId, prospectFields)
-    return prospectFields
+def updateProspectCleaningListingFields(config, prospectId, prospectFields):
+    """Clears out the value of each Custom Field that was previously calculated.
 
-def cleanProspectFields(prospectFields):
+    Args:
+        config:
+            The configuration dict that could have been loaded from the
+            readConfig method above in this file
+        prospectId:
+            The Pardot ID of the Prospect that we are updating.
+        prospectFields:
+            A dict which represents Pardot Field API Name and Value key/pairs,
+            which we want to clear for the Prospect Record
+    """
     for k,v in prospectFields.items():
         if k == 'id': continue # we don't want to wipe this out
         prospectFields[k]=''
-
-def updateProspectCleaningListingFields(config, prospectId, prospectFields):
-    cleanProspectFields(prospectFields)
     updateProspect(config, prospectId, prospectFields)
 
 def updateBatch(config, batchProspects):
+    """Uses the Pardot API to update a list of Prospects in a single API call.
+
+    This code also adjusts the payload when using V3 of the Pardot API, as its
+    data structure is different than when using V4. This differing data
+    structure is also why the code in this demo sample will NOT clear the value
+    id when clearing prospect values.
+
+    Args:
+        config:
+            The configuration dict that could have been loaded from the
+            readConfig method above in this file
+        batchProspects:
+            A batch of Prospects. Should not exceed 50
+    """
     reqData = {'prospects': batchProspects }
     if(int(config['Pardot']['legacy_api_version']) == 3):
         # we need to adjust the data structure of the request for API version 3
         reqData = {'prospects': {}}
         for prospect in batchProspects:  # loop thru each prospect
-            pData = {prospect['id']: {}} # create MAP for the actual Prospect
+            pData = {prospect['id']: {}} # create dict for the actual Prospect
             for k,v in prospect.items(): # loop thru each field
                 if k == 'id': continue   # we don't want this in the values
-                pData[prospect['id']][k] = v
+                pData[prospect['id']][k] = v # prospect ID is the key for the dict
 
     apiUrl = '{pardotUrl}/api/prospect/version/{legacyVersion}/do/batchUpdate?format=json' \
             .format(pardotUrl = config['Pardot']['url'], \
