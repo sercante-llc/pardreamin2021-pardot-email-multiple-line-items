@@ -298,6 +298,8 @@ def updateBatch(config, batchProspects):
     reqData = {'prospects': batchProspects }
     if(int(config['Pardot']['legacy_api_version']) == 3):
         # we need to adjust the data structure of the request for API version 3
+        # I apologize, I don't have an environment to test this, so it may have bugs.
+        # If it does, let me know and we can work it out!
         reqData = {'prospects': {}}
         for prospect in batchProspects:  # loop thru each prospect
             pData = {prospect['id']: {}} # create dict for the actual Prospect
