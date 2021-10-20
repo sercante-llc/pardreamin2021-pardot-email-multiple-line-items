@@ -8,10 +8,10 @@ url=https://login.salesforce.com
 
 [Pardot]
 business_unit_id=
-email_template_id=
-campaign_id=
 legacy_api_version=4
 url=https://pi.pardot.com
+email_template_id=
+campaign_id=
 
 [Field Naming]
 listing_count_min=3
