@@ -55,8 +55,9 @@ def authenticate(config):
         print('Got access token, ready to make API requests')
         config['Salesforce']['access_token'] = response.json().get('access_token')
     else:
-        print('Had trouble getting access token. Make sure User and Connected App are correctly configured in config/app.ini')
-        print('Status:{}, {}: {}'.format(r.status_code, response.json().get('error'), response.json().get('error_description') ))
+        print('Had trouble getting access token. Make sure User and Connected App are correctly configured '\
+            + 'in config/app.ini')
+        print('Status:{}, {}: {}'.format(response.status_code, response.json().get('error'), response.json().get('error_description') ))
         sys.exit(1)
 
 # ****************************************************************************
@@ -230,7 +231,7 @@ def prepareProspectFields(config, listings, agentName):
     prospectFields[listingCountFieldName] = len(listings)
 
     agentNameFieldName = fieldNameFormat.format(field='AgentName', lineItemNumber='')
-    prospectFields[agentNameFieldName] = recipient['agent']
+    prospectFields[agentNameFieldName] = agentName
     
     # now we loop through the listings
     listingNumber=1

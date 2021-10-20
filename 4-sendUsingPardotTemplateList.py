@@ -55,7 +55,8 @@ apiUrl = '{pardotUrl}/api/email/version/{legacyVersion}/do/send/?format=json' \
                 legacyVersion = config['Pardot']['legacy_api_version'])
 print(apiUrl)
 reqData = {
-    # required fields for a one-to-one, providing complete HTML Content and Sender Details (not specifying Pardot User Id)
+    # required fields for a one-to-one, providing complete HTML Content and Sender Details 
+    # (not specifying Pardot User Id)
     'campaign_id': config['Pardot']['campaign_id'],
     'email_template_id': config['Pardot']['email_template_id'],
     'list_ids[]': config['Pardot']['sending_list_id']
@@ -69,9 +70,11 @@ response = requests.post(url=apiUrl, data=reqData, headers=reqHeaders)
 json = response.json()
 
 if response.status_code == 200 and json.get('@attributes').get('stat') == 'ok':
-    print('Successfully sent email to list {pardotListId}'.format(pardotListId = config['Pardot']['sending_list_id'] ))
+    print('Successfully sent email to list {pardotListId}'.format(\
+        pardotListId = config['Pardot']['sending_list_id'] ))
 else:
-    print('Could not send email to list {pardotListId}'.format(pardotListId = config['Pardot']['sending_list_id'] ))
+    print('Could not send email to list {pardotListId}'.format(\
+        pardotListId = config['Pardot']['sending_list_id'] ))
     print(json)
     sys.exit(30)
 

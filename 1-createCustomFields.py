@@ -15,10 +15,12 @@ demoFunctions.authenticate(config)
 
 # make sure we haven't previously created fields
 if os.path.isfile('config/fields.csv'):
-    print('This script has already generated fields in the past. Please delete them first using 5-deleteCustomFields.py, then try re-running this script')
+    print('This script has already generated fields in the past. Please delete them first using '\
+        + '5-deleteCustomFields.py, then try re-running this script')
     sys.exit(10)
 
-# create the fields to support the Template, which aren't specific to the number of listings we want to display
+# create the fields to support the Template, which aren't specific to the number of 
+# listings we want to display
 demoFunctions.createCustomField(config,'Count','')
 demoFunctions.createCustomField(config,'AgentName','')
 
@@ -34,6 +36,7 @@ for i in range(1,itemCount+1):
             .format(lineItemNumber = i))
             
     # fields will be named with the prefix defined in app.ini (for example: PD2021_Listing_XXXXXXXX)
-    demoFunctions.createCustomFields(config, ['Price','Bedrooms','Bathrooms','Sqft','Address','ListingUrl','ImageUrl'], i)
+    demoFunctions.createCustomFields(config, ['Price','Bedrooms','Bathrooms','Sqft','Address',
+                                                'ListingUrl','ImageUrl'], i)
 
 print('Done creating fields, details stored in config/fields.csv')

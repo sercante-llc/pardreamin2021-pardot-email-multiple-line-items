@@ -34,9 +34,11 @@ for recipient in recipients:
 
     print(apiUrl)
     reqData = {
-        # required fields for a one-to-one, providing complete HTML Content and Sender Details (not specifying Pardot User Id)
+        # required fields for a one-to-one, providing complete HTML Content and Sender Details 
+        # (not specifying Pardot User Id)
         'campaign_id': config['Pardot']['campaign_id'],
-        'text_content': 'This is a demo, so we are skipping the text version. In the real world, you would need to do this as well. {{EmailPreferenceCenter}}',
+        'text_content': 'This is a demo, so we are skipping the text version. '\
+            + 'In the real world, you would need to do this as well. {{EmailPreferenceCenter}}',
         'name': 'ParDreamin Realty Weekly Email',
         'subject': 'Here are {itemCount} Listings Waiting for You!'.format(itemCount = len(listings)),
         'from_email': 'realty@pardreamin.com',
