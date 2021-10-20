@@ -84,7 +84,11 @@ print('batch count: {batchCount}'.format(batchCount=len(batches)))
 for batch in batches:
     print('batch has {prospectCount} prospects'.format(prospectCount = len(batch)))
     for prospect in batch:
-        demoFunctions.cleanProspectFields(prospect)
+        # a really good idea is to now clean the Prospect Fields so that they aren't left with dirty data
+        # which could mess up a send later on
+        for k,v in prospect.items():
+            if k == 'id': continue # we don't want to wipe this value out
+            prospect[k]=''
     demoFunctions.updateBatch(config, batch)
 
 print('Script executed successfully')
