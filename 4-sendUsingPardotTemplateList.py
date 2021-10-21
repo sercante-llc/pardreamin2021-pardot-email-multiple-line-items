@@ -78,7 +78,13 @@ else:
     print(json)
     sys.exit(30)
 
-print('email sent, cleaning prospect custom fields')
+print('email sent, simulating time delay until email is actually sent by Pardot')
+print('clearing the values too soon could result in a bunch of blank emails!')
+print('')
+print('please press RETURN once the emails have been delivered')
+input()
+
+print('now resuming with the field clean up')
 # now lets clean the prospect data up
 print('batch count: {batchCount}'.format(batchCount=len(batches)))
 for batch in batches:
