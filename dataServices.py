@@ -58,7 +58,7 @@ class RecipientService:
         """
         recipients = []
         
-        with open('data/clients.csv','r') as csvFile:
+        with open('data/recipients.csv','r') as csvFile:
             csvReader = csv.DictReader(csvFile)
             for row in csvReader:
                 recipients.append(row)
